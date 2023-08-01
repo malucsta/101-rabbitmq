@@ -6,6 +6,10 @@ services:
     build:
       context: .
       dockerfile: Crawler.API/Dockerfile
+    environment:
+      - RabbitHost=rabbitmq
+      - RabbitUser=guest
+      - RabbitPass=guest
     networks:
       #- my_custom_network
       - internal

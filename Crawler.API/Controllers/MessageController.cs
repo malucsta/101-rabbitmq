@@ -1,4 +1,4 @@
-﻿using Crawler.Infra.RabbitMq;
+﻿using Crawler.Infra.RabbitMq.Pub;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 

@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Crawler.Infra.RabbitMq.Pub;
+using Crawler.Infra.RabbitMq.Sub;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
-using System.Threading.Channels;
 
 namespace Crawler.Infra.RabbitMq;
 
@@ -9,16 +10,25 @@ public static class ExtensionMethods
 {
     public static IServiceCollection ConfigureRabbitMq(this IServiceCollection services)
     {
-        var connection = services.CreateConnection("rabbitmq", "guest", "guest");
+        var host = Environment.GetEnvironmentVariable("RabbitHost");
+        var user = Environment.GetEnvironmentVariable("RabbitUser");
+        var pass = Environment.GetEnvironmentVariable("RabbitPass");
+
+        if (host is null || user is null || pass is null) 
+            throw new Exception("Invalid rabbitmq credentials");
+
+        var connection = services.CreateConnection(host, user, pass);
         var channel = services.CreateChannel(connection);
         var manager = CreateManager(channel);
         
         services.ConfigurePublisher();
 
-        manager.AddQueues();
-        
-        services.AddConsumer("teste-queue")
-                .AddQueueAndConsumer(manager, "teste2");
+        // add queues
+        manager.AddQueue(Constants.Queues.FirstTest);
+
+        // add consumers
+        services.AddConsumer(Constants.Queues.FirstTest)
+                .AddQueueAndConsumer(manager, Constants.Queues.SecondTest);
 
         return services;
     }
@@ -74,9 +84,10 @@ public static class ExtensionMethods
         return manager;
     }
 
-    public static void AddQueues(this RabbitMQQueueManager manager)
+    public static RabbitMQQueueManager AddQueue(this RabbitMQQueueManager manager, string queue)
     {
-        manager.DeclareQueue("teste-queue");
+        manager.DeclareQueue(queue);
+        return manager;
     }
 
     public static IServiceCollection AddConsumer(this IServiceCollection services, string queueName)

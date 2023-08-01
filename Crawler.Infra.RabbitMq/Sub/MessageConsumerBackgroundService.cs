@@ -3,7 +3,7 @@ using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace Crawler.Infra.RabbitMq;
+namespace Crawler.Infra.RabbitMq.Sub;
 public class MessageConsumerBackgroundService : BackgroundService
 {
     private readonly IModel _channel;
@@ -26,20 +26,12 @@ public class MessageConsumerBackgroundService : BackgroundService
             // Process the messsage based on the queue name
             switch (_queueName)
             {
-                case "Queue1":
-                    Console.WriteLine($"Queue1 - Received message: {message}");
+                case Constants.Queues.FirstTest:
+                    Console.WriteLine($"{Constants.Queues.FirstTest} - Received message: {message}");
                     break;
-
-                case "Queue2":
-                    Console.WriteLine($"Queue2 - Received message: {message}");
+                case Constants.Queues.SecondTest:
+                    Console.WriteLine($"{Constants.Queues.SecondTest} - Received message: {message}");
                     break;
-                case "teste-queue":
-                    Console.WriteLine($"teste-queue - Received message: {message}");
-                    break;
-                case "teste2":
-                    Console.WriteLine($"teste2 - Received message: {message}");
-                    break;
-
                 default:
                     break;
             }
