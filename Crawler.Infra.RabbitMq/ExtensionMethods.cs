@@ -1,5 +1,6 @@
 ﻿using Crawler.Infra.RabbitMq.Pub;
 using Crawler.Infra.RabbitMq.Sub;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RabbitMQ.Client;
@@ -8,16 +9,21 @@ namespace Crawler.Infra.RabbitMq;
 
 public static class ExtensionMethods
 {
-    public static IServiceCollection ConfigureRabbitMq(this IServiceCollection services)
+    public static IServiceCollection ConfigureRabbitMq(this IServiceCollection services, IConfiguration configuration)
     {
-        var host = Environment.GetEnvironmentVariable("RabbitHost");
-        var user = Environment.GetEnvironmentVariable("RabbitUser");
-        var pass = Environment.GetEnvironmentVariable("RabbitPass");
+        // if you want to bind config from environment variables
+        //var host = Environment.GetEnvironmentVariable("RabbitHost");
+        //var user = Environment.GetEnvironmentVariable("RabbitUser");
+        //var pass = Environment.GetEnvironmentVariable("RabbitPass");
 
-        if (host is null || user is null || pass is null) 
+        var settings = new RabbitMqSettings();
+        configuration.GetSection("RabbitMq").Bind(settings);
+        services.AddSingleton(settings);
+
+        if (settings.HostName is null || settings.User is null || settings.Pass is null) 
             throw new Exception("Invalid rabbitmq credentials");
 
-        var connection = services.CreateConnection(host, user, pass);
+        var connection = services.CreateConnection(settings);
         var channel = services.CreateChannel(connection);
         var manager = CreateManager(channel);
         
@@ -39,13 +45,13 @@ public static class ExtensionMethods
         return services;
     }
 
-    private static IConnection CreateConnection(this IServiceCollection services, string hostName, string userName, string password)
+    private static IConnection CreateConnection(this IServiceCollection services, RabbitMqSettings settings)
     {
         var factory = new ConnectionFactory
         {
-            HostName = hostName,
-            UserName = userName,
-            Password = password
+            HostName = settings.HostName,
+            UserName = settings.User,
+            Password = settings.Pass
         };
 
         var connection = factory.CreateConnection();
